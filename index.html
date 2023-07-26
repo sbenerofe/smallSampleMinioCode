@@ -1,6 +1,6 @@
 <input type="file" id="selector" multiple />
 <button onclick="upload()">Upload</button>
-<button onclick="directory()">Directory</button>
+<button onclick="minioDirectory()">Directory</button>
 
 <div id="status">No uploads</div>
 
@@ -17,18 +17,6 @@
         uploadFile(file, url);
       });
     }
-  }
-
-  function minioDirectory() {
-    fetch(`http://127.0.0.1:3000/minioDirectory`)
-      .then((response) => {
-        response.text().then((url) => {
-          cb(file, url);
-        });
-      })
-      .catch((e) => {
-        console.error(e);
-      });
   }
 
   // `retrieveNewURL` accepts the name of the current file and invokes the `/presignedUrl` endpoint to
@@ -60,6 +48,18 @@
         document.querySelector(
           "#status"
         ).innerHTML += `<br>Uploaded ${file.name}.`;
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+  }
+
+  function minioDirectory() {
+    fetch(`http://127.0.0.1:3000/minioDirectory`)
+      .then((response) => {
+        response.text().then((url) => {
+          cb(file, url);
+        });
       })
       .catch((e) => {
         console.error(e);

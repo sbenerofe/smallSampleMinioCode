@@ -28,19 +28,29 @@ var client = new Minio.Client({
 // express is a small HTTP server wrapper, but this works with any HTTP server
 const server = require("express")();
 server.use(cors());
+const bucketName = "minio-test";
+const objectName = "";
+const expires = 24 * 60 * 60;
 
 server.get("/presignedUrl", (req, res) => {
-  client.presignedPutObject("minio-test", req.query.name, (err, url) => {
+  client.presignedPutObject(bucketName, req.query.name, (err, url) => {
     if (err) throw err;
     res.end(url);
   });
 });
 
 server.get("/minioDirectory", (req, res) => {
-const stream = Client.extensions.listObjectsV2WithMetadata('mybucket','', true,'')
-stream.on('data', function(obj) { console.log(obj) } )
-stream.on('error', function(err) { console.log(err) } )
-})
+  Client.presignedListObjects(
+    bucketName,
+    objectName,
+    expires,
+    function (err, presignedUrl) {
+      if (err) throw err;
+      console.log(presignedUrl);
+      res.end(presignedUrl);
+    }
+  );
+});
 
 server.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");

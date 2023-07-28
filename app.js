@@ -6,18 +6,18 @@ const Minio = require("minio");
 const cors = require("cors");
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 // Instantiate the `Minio.Client` with an endpoint and access keys.
-var client = new Minio.Client({
+const client = new Minio.Client({
   // endPoint: "localhost",
   // port: 9000,
   // useSSL: true,
   // accessKey: "Q3AM3UQ867SPQQA43P2F",
   // secretKey: "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
 
-  endPoint: "localhost",
+  endPoint: "192.168.7.254",
   port: 9000,
   useSSL: true,
-  accessKey: "AUPYyebR1sfW2gXtjjbp",
-  secretKey: "lGJXHZ6M3NRd26cnex55wJ5DeYc7MQy07nYtvPqs",
+  accessKey: "LhaSCU0SrA9RdYWUZFLB",
+  secretKey: "OVvJ8xtdClWlf32KjHcNFdpaIlxC56eE7Y6pwpEA",
 });
 
 // Instantiate an `express` server and expose an endpoint called `/presignedUrl` as a `GET` request that
@@ -40,20 +40,63 @@ server.get("/presignedUrl", (req, res) => {
 });
 
 server.get("/minioDirectory", (req, res) => {
-  Client.presignedListObjects(
+  res.set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+
+  const stream = client.extensions.listObjectsV2WithMetadata(
     bucketName,
-    objectName,
-    expires,
-    function (err, presignedUrl) {
-      if (err) throw err;
-      console.log(presignedUrl);
-      res.end(presignedUrl);
-    }
+    "",
+    true,
+    ""
   );
+  stream.on("data", function (obj) {
+    console.log(obj);
+    res.write(`data: ${JSON.stringify(obj)}\n\n`);
+  });
+  stream.on("error", function (err) {
+    console.error(err);
+    res.end();
+  });
 });
+
+server.post("/loadObject", (req, res) => {
+  const objectName = `goldenRetriever.jpg`; //req.body.files && req.body.files[0];
+  client.presignedGetObject(bucketName, objectName, (err, url) => {
+    if (err) throw err;
+    res.json([url]);
+  });
+});
+
+// server.get("/minioDirectory", (req, res) => {
+//   const stream = client.extensions.listObjectsV2WithMetadata(
+//     bucketName,
+//     "",
+//     true,
+//     ""
+//   );
+//   stream.on("data", function (obj) {
+//     console.log(obj);
+//     res.end(JSON.stringify(obj));
+//   });
+//   stream.on("error", function (err) {
+//     console.log(err);
+//   }); // client.presignedListObjects(
+//   bucketName,
+//   objectName,
+//   expires,
+//   function (err, presignedUrl) {
+//     if (err) throw err;
+//     console.log(presignedUrl);
+//     res.end(presignedUrl);
+//   }
+// );
+// });
 
 server.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
 
-server.listen(3000, () => console.log("Server started on port 3000"));
+server.listen(3100, () => console.log("Server started on port 3100"));
